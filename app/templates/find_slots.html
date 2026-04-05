@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% block title %}Trouver un créneau — Calendar Sync{% endblock %}
+
+{% block content %}
+<div class="find-slots">
+  <h1>Trouver un créneau commun</h1>
+  <p class="subtitle">Entrez les participants et les contraintes pour trouver un moment disponible pour tous.</p>
+
+  <div class="slots-layout">
+
+    <!-- Formulaire -->
+    <div class="card form-card">
+      <form method="POST" action="/slots/find">
+        <div class="field">
+          <label for="emails">Participants (emails séparés par une virgule)</label>
+          <input type="text" id="emails" name="emails"
+            placeholder="alice@example.com, bob@example.com"
+            value="{{ form.emails if form else '' }}" />
+          <span class="field-hint">Laissez vide pour vérifier uniquement votre propre disponibilité.</span>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="date_from">Du</label>
+            <input type="date" id="date_from" name="date_from" required
+              value="{{ form.date_from if form else '' }}" />
+          </div>
+          <div class="field">
+            <label for="date_to">Au</label>
+            <input type="date" id="date_to" name="date_to" required
+              value="{{ form.date_to if form else '' }}" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="duration">Durée souhaitée</label>
+          <select id="duration" name="duration">
+            {% for val, label in durations %}
+            <option value="{{ val }}" {% if form and form.duration == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="work_start">Début journée</label>
+            <input type="time" id="work_start" name="work_start"
+              value="{{ form.work_start if form else '09:00' }}" />
+          </div>
+          <div class="field">
+            <label for="work_end">Fin journée</label>
+            <input type="time" id="work_end" name="work_end"
+              value="{{ form.work_end if form else '18:00' }}" />
+          </div>
+        </div>
+        <label class="checkbox-label">
+          <input type="checkbox" name="include_weekends" value="true"
+            {% if form and form.include_weekends %}checked{% endif %} />
+          Inclure les week-ends
+        </label>
+        <button type="submit" class="btn btn-primary" style="margin-top:1rem">Rechercher</button>
+      </form>
+    </div>
+
+    <!-- Résultats -->
+    <div class="results-panel">
+      {% if error %}
+        <div class="alert alert-error">{{ error }}</div>
+
+      {% elif searched and slots is not none %}
+        {% if slots %}
+
+          <div class="results-header">
+            <span class="results-count">
+              {{ slots_count }} créneau{% if slots_count > 1 %}x{% endif %}
+              de {{ duration_label }} trouvé{% if slots_count > 1 %}s{% endif %}
+            </span>
+            <div class="view-toggle">
+              <button class="toggle-btn active" id="btn-timeline" onclick="showView('timeline')">Timeline</button>
+              <button class="toggle-btn" id="btn-list" onclick="showView('list')">Liste</button>
+            </div>
+          </div>
+
+          <!-- Vue Timeline -->
+          <div id="view-timeline" class="timeline-container">
+            <div class="timeline-axis">
+              {% for mark in axis_labels %}
+              <span class="axis-mark" style="left: {{ mark.pct }}%">{{ mark.label }}</span>
+              {% endfor %}
+            </div>
+            <div class="timeline-rows" id="timeline-rows"></div>
+          </div>
+
+          <!-- Vue Liste -->
+          <div id="view-list" class="list-view" style="display:none">
+            <ul class="slots-list">
+              {% set current_day = namespace(value="") %}
+              {% for slot in slots %}
+                {% set day_label = slot.start | date_fr %}
+                {% if day_label != current_day.value %}
+                  {% set current_day.value = day_label %}
+                  <li class="slot-day-header">{{ day_label }}</li>
+                {% endif %}
+                <li class="slot-item">
+                  <div class="slot-time">{{ slot.start | time_fr }} – {{ slot.end | time_fr }}</div>
+                  <a class="btn-export"
+                     href="/slots/export.ics?start={{ slot.start.isoformat() }}&end={{ slot.end.isoformat() }}&title=Réunion"
+                     title="Télécharger l'invitation .ics">
+                    📅 Exporter
+                  </a>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+
+        {% else %}
+          <div class="empty-results">
+            <p>Aucun créneau commun trouvé sur cette période.</p>
+            <p class="muted">Essayez d'élargir la plage de dates ou de réduire la durée.</p>
+          </div>
+        {% endif %}
+
+      {% else %}
+        <div class="results-placeholder">
+          <p>Les créneaux disponibles s'afficheront ici.</p>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+
+{% if timeline_json is defined %}
+<script>
+const TIMELINE_DATA = {{ timeline_json | safe }};
+
+function showView(view) {
+  document.getElementById('view-timeline').style.display = view === 'timeline' ? 'block' : 'none';
+  document.getElementById('view-list').style.display = view === 'list' ? 'block' : 'none';
+  document.getElementById('btn-timeline').classList.toggle('active', view === 'timeline');
+  document.getElementById('btn-list').classList.toggle('active', view === 'list');
+}
+
+function renderTimeline() {
+  const container = document.getElementById('timeline-rows');
+  if (!container) return;
+
+  TIMELINE_DATA.forEach((day, i) => {
+    const row = document.createElement('div');
+    row.className = 'tl-row';
+    row.style.animationDelay = `${i * 40}ms`;
+
+    // Label
+    const label = document.createElement('div');
+    label.className = 'tl-label';
+    label.textContent = day.label;
+    row.appendChild(label);
+
+    // Barre
+    const bar = document.createElement('div');
+    bar.className = 'tl-bar';
+
+    // Blocs occupés
+    day.busy.forEach(b => {
+      const block = document.createElement('div');
+      block.className = 'tl-busy';
+      block.style.left = b.start_pct + '%';
+      block.style.width = b.width_pct + '%';
+      block.setAttribute('data-tip', b.label);
+      bar.appendChild(block);
+    });
+
+    // Créneaux libres
+    day.slots.forEach(s => {
+      const block = document.createElement('div');
+      block.className = 'tl-slot';
+      block.style.left = s.start_pct + '%';
+      block.style.width = s.width_pct + '%';
+      block.setAttribute('data-tip', `${s.label} — cliquer pour exporter`);
+      block.setAttribute('data-start', s.iso_start);
+      block.setAttribute('data-end', s.iso_end);
+      block.addEventListener('click', () => {
+        const url = `/slots/export.ics?start=${encodeURIComponent(s.iso_start)}&end=${encodeURIComponent(s.iso_end)}&title=R%C3%A9union`;
+        window.location.href = url;
+      });
+      bar.appendChild(block);
+    });
+
+    row.appendChild(bar);
+
+    // Badge nombre de créneaux
+    const badge = document.createElement('div');
+    badge.className = 'tl-badge';
+    badge.textContent = day.slot_count;
+    row.appendChild(badge);
+
+    container.appendChild(row);
+  });
+
+  // Tooltip
+  document.querySelectorAll('[data-tip]').forEach(el => {
+    const tip = document.createElement('div');
+    tip.className = 'tl-tooltip';
+    tip.textContent = el.getAttribute('data-tip');
+    el.appendChild(tip);
+  });
+}
+
+renderTimeline();
+</script>
+{% endif %}
+{% endblock %}

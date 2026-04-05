@@ -1,0 +1,22 @@
+# Environnement
+venv/
+.env
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Base de données locale
+*.db
+*.sqlite3
+
+# Pytest
+.pytest_cache/
+.coverage
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Connecter Apple Calendar — Calendar Sync{% endblock %}
+
+{% block content %}
+<div class="connect-apple">
+  <a href="/calendars/connect" class="back-link">← Retour</a>
+  <h1>Connecter Apple Calendar</h1>
+  <p class="subtitle">iCloud Calendar utilise un mot de passe d'app dédié, distinct de votre mot de passe Apple ID principal.</p>
+
+  {% if error %}
+  <div class="alert alert-error">{{ error }}</div>
+  {% endif %}
+
+  <div class="card form-card">
+    <form method="POST" action="/calendars/apple/connect">
+      <div class="field">
+        <label for="apple_id">Apple ID (email)</label>
+        <input type="email" id="apple_id" name="apple_id" required autofocus placeholder="exemple@icloud.com" />
+      </div>
+      <div class="field">
+        <label for="app_password">Mot de passe d'app iCloud</label>
+        <input type="password" id="app_password" name="app_password" required placeholder="xxxx-xxxx-xxxx-xxxx" />
+      </div>
+      <button type="submit" class="btn btn-primary">Connecter</button>
+    </form>
+  </div>
+
+  <div class="card info-card">
+    <h2>Comment obtenir un mot de passe d'app ?</h2>
+    <ol>
+      <li>Va sur <strong>appleid.apple.com</strong></li>
+      <li>Connecte-toi avec ton Apple ID</li>
+      <li>Section <strong>"Connexion et sécurité"</strong> → <strong>"Mots de passe spécifiques aux apps"</strong></li>
+      <li>Clique <strong>"+"</strong> → donne un nom (ex: "Calendar Sync")</li>
+      <li>Copie le mot de passe généré (format <code>xxxx-xxxx-xxxx-xxxx</code>)</li>
+    </ol>
+  </div>
+</div>
+{% endblock %}

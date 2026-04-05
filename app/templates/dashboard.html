@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Calendar Sync{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+  <div class="dash-header">
+    <div>
+      <h1>Bonjour 👋</h1>
+      <p class="subtitle">{{ user.email }}</p>
+    </div>
+    <a href="/slots/find" class="btn btn-primary">Rechercher un créneau</a>
+  </div>
+
+  {% if connected %}
+  <div class="alert alert-success">
+    Calendrier {{ connected }} connecté et synchronisé avec succès.
+  </div>
+  {% endif %}
+
+  <section>
+    <div class="section-header">
+      <h2>Mes calendriers</h2>
+      <a href="/calendars/connect" class="btn btn-secondary">+ Connecter</a>
+    </div>
+
+    {% if accounts %}
+    <div class="accounts-grid">
+      {% for acc in accounts %}
+      <div class="account-card" id="card-{{ acc.id }}">
+        <div class="account-top">
+          <div class="account-icon provider-{{ acc.provider }}">{{ acc.icon }}</div>
+          <div class="account-info">
+            <div class="account-label">{{ acc.label }}</div>
+            <div class="account-email">{{ acc.email }}</div>
+          </div>
+          <button class="btn-icon btn-disconnect"
+                  onclick="disconnect({{ acc.id }})"
+                  title="Déconnecter">✕</button>
+        </div>
+
+        <div class="account-stats">
+          <div class="stat">
+            <span class="stat-value" id="count-{{ acc.id }}">{{ acc.event_count }}</span>
+            <span class="stat-label">événements</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value">
+              {% if acc.sync_age_min is none %}
+                —
+              {% elif acc.sync_age_min < 1 %}
+                À l'instant
+              {% elif acc.sync_age_min < 60 %}
+                {{ acc.sync_age_min }} min
+              {% else %}
+                {{ (acc.sync_age_min // 60) }}h
+              {% endif %}
+            </span>
+            <span class="stat-label">dernière sync</span>
+          </div>
+        </div>
+
+        <div class="account-footer">
+          <div class="sync-status" id="status-{{ acc.id }}">
+            {% if acc.sync_age_min is none %}
+              <span class="dot dot-gray"></span> Jamais synchronisé
+            {% elif acc.sync_age_min < 15 %}
+              <span class="dot dot-green"></span> À jour
+            {% elif acc.sync_age_min < 60 %}
+              <span class="dot dot-yellow"></span> Sync recommandée
+            {% else %}
+              <span class="dot dot-red"></span> Sync requise
+            {% endif %}
+          </div>
+          <button class="btn-sync" id="sync-btn-{{ acc.id }}"
+                  onclick="syncAccount({{ acc.id }})">
+            ↻ Synchroniser
+          </button>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+      <p>Aucun calendrier connecté.</p>
+      <a href="/calendars/connect" class="btn btn-primary" style="margin-top:1rem">Connecter un calendrier</a>
+    </div>
+    {% endif %}
+  </section>
+</div>
+
+<script>
+async function syncAccount(id) {
+  const btn = document.getElementById(`sync-btn-${id}`);
+  const status = document.getElementById(`status-${id}`);
+  const count = document.getElementById(`count-${id}`);
+  btn.disabled = true;
+  btn.textContent = '↻ Sync...';
+  try {
+    const res = await fetch(`/dashboard/sync/${id}`, { method: 'POST' });
+    const data = await res.json();
+    if (data.ok) {
+      count.textContent = data.synced;
+      status.innerHTML = '<span class="dot dot-green"></span> À jour';
+      btn.textContent = '✓ Synchronisé';
+      setTimeout(() => { btn.disabled = false; btn.textContent = '↻ Synchroniser'; }, 2000);
+    } else {
+      status.innerHTML = '<span class="dot dot-red"></span> Erreur';
+      btn.disabled = false; btn.textContent = '↻ Réessayer';
+    }
+  } catch {
+    btn.disabled = false; btn.textContent = '↻ Réessayer';
+  }
+}
+
+async function disconnect(id) {
+  if (!confirm('Déconnecter ce calendrier ? Les événements synchronisés seront supprimés.')) return;
+  const res = await fetch(`/dashboard/disconnect/${id}`, { method: 'POST' });
+  const data = await res.json();
+  if (data.ok) {
+    const card = document.getElementById(`card-${id}`);
+    card.style.transition = 'opacity 0.3s, transform 0.3s';
+    card.style.opacity = '0'; card.style.transform = 'scale(0.95)';
+    setTimeout(() => card.remove(), 300);
+  }
+}
+</script>
+{% endblock %}

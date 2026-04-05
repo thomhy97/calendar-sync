@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Connecter un calendrier — Calendar Sync{% endblock %}
+
+{% block content %}
+<div class="connect-page">
+  <h1>Connecter un calendrier</h1>
+  <p class="subtitle">Choisissez votre fournisseur de calendrier.</p>
+
+  <div class="provider-grid">
+
+    <div class="provider-card">
+      <div class="provider-logo google">G</div>
+      <h2>Google Calendar</h2>
+      <p>Connectez-vous via votre compte Google.</p>
+      <a href="/calendars/google/start" class="btn btn-primary">Connecter Google</a>
+    </div>
+
+    <div class="provider-card provider-soon">
+      <div class="provider-logo outlook">O</div>
+      <h2>Outlook</h2>
+      <p>Microsoft 365 et Outlook.com.</p>
+      <span class="badge-soon">Bientôt disponible</span>
+    </div>
+
+    <div class="provider-card">
+      <div class="provider-logo apple">🍎</div>
+      <h2>Apple Calendar</h2>
+      <p>iCloud Calendar via mot de passe d'app.</p>
+      <a href="/calendars/apple/connect" class="btn btn-secondary">Connecter Apple</a>
+    </div>
+
+  </div>
+
+  <a href="/dashboard" class="back-link">← Retour au dashboard</a>
+</div>
+{% endblock %}
