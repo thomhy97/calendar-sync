@@ -47,8 +47,13 @@ def send_invite(
     """
 
     try:
+        from_email = (
+            "onboarding@resend.dev"
+            if settings.RESEND_FROM_DOMAIN == "resend.dev"
+            else f"noreply@{settings.RESEND_FROM_DOMAIN}"
+        )
         params = {
-            "from": f"Calendar Sync <noreply@{settings.RESEND_FROM_DOMAIN}>",
+            "from": f"Calendar Sync <{from_email}>",
             "to": to_emails,
             "subject": f"Invitation : {title} — {date_str}",
             "html": html_body,
