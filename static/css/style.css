@@ -713,6 +713,18 @@ nav {
   box-shadow: 0 0 12px var(--primary-glow);
 }
 
+.slot-actions { display: flex; gap: 0.4rem; }
+.btn-email { font-size: 0.73rem; padding: 0.28rem 0.65rem; background: var(--accent-dim); border: 1px solid rgba(124,106,247,0.2); border-radius: 5px; color: var(--accent); cursor: pointer; font-weight: 500; transition: all 0.15s; }
+.btn-email:hover { background: rgba(124,106,247,0.25); box-shadow: 0 0 12px rgba(124,106,247,0.3); }
+
+/* --- MODAL --- */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px); z-index: 200; display: flex; align-items: center; justify-content: center; }
+.modal-box { background: var(--surface-2); border: 1px solid var(--border-hi); border-radius: var(--radius-lg); padding: 2rem; width: 100%; max-width: 440px; box-shadow: var(--shadow-lg); animation: fadeUp 0.2s ease both; }
+.modal-box h3 { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 700; margin-bottom: 0.3rem; }
+.modal-sub { font-size: 0.82rem; color: var(--text-3); margin-bottom: 1.5rem; }
+.modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.25rem; }
+.modal-actions .btn { width: auto; }
+
 .empty-results, .results-placeholder {
   background: var(--surface);
   border: 1px dashed var(--border-hi);
@@ -857,3 +869,156 @@ nav {
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+
+/* ─── SHARE MANAGE PAGE ─────────────────────────────────────── */
+
+.share-manage {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+.share-manage h1 { margin-bottom: 0.25rem; }
+.share-manage .subtitle { color: var(--text-muted); margin-bottom: 2rem; }
+
+.create-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+.create-card h2 { font-size: 1rem; margin-bottom: 1rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+
+.link-result {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--surface-3);
+  border-radius: 10px;
+  border: 1px solid var(--border-hi);
+  flex-wrap: wrap;
+}
+.link-result .link-label { color: var(--text-muted); font-size: 0.85rem; }
+.link-result code { color: var(--primary); font-size: 0.85rem; flex: 1; word-break: break-all; }
+
+.section-title { font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.75rem; }
+
+.links-list { display: flex; flex-direction: column; gap: 0.75rem; }
+
+.link-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  flex-wrap: wrap;
+}
+.link-item-label { font-weight: 600; font-size: 0.95rem; }
+.link-item-meta { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem; }
+.link-item-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.link-url-short { font-size: 0.78rem; color: var(--primary); max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.btn-delete {
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #ff4f4f44;
+  background: transparent;
+  color: #ff6b6b;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn-delete:hover { background: #ff4f4f22; border-color: #ff6b6b; }
+
+/* ─── PUBLIC SHARE PAGE ─────────────────────────────────────── */
+
+.public-page {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
+}
+.public-header { text-align: center; margin-bottom: 2.5rem; }
+.public-brand {
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--primary);
+  margin-bottom: 1rem;
+  border: 1px solid var(--primary);
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+}
+.public-header h1 { font-size: clamp(1.6rem, 4vw, 2.2rem); margin-bottom: 0.5rem; }
+.public-header .subtitle { color: var(--text-muted); font-size: 0.95rem; }
+
+.public-footer { text-align: center; margin-top: 3rem; font-size: 0.8rem; color: var(--text-muted); }
+.public-footer a { color: var(--primary); text-decoration: none; }
+.public-footer a:hover { text-decoration: underline; }
+
+/* ─── PROFILE PAGE ──────────────────────────────────────────── */
+
+.profile-page {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
+}
+.profile-page h1 { margin-bottom: 1.5rem; }
+
+.profile-section { margin-bottom: 1.5rem; }
+.section-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+.profile-info-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.95rem;
+}
+.profile-info-label { color: var(--text-muted); min-width: 60px; }
+.profile-info-value { color: var(--text); font-weight: 500; }
+
+.profile-form { display: flex; flex-direction: column; gap: 0.75rem; }
+
+.alert {
+  padding: 0.65rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  margin-bottom: 0.75rem;
+}
+.alert-error { background: #ff4f4f1a; border: 1px solid #ff4f4f44; color: #ff8a8a; }
+.alert-success { background: #00e5c01a; border: 1px solid #00e5c044; color: var(--primary); }
+
+.danger-zone { border-color: #ff4f4f44 !important; }
+.danger-label { color: #ff6b6b !important; }
+.danger-desc { color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1rem; }
+.btn-delete-account { padding: 0.5rem 1.25rem; font-size: 0.875rem; }
+
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+.btn-secondary {
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-hi);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-secondary:hover { background: var(--surface-3); }

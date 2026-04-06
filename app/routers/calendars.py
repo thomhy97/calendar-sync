@@ -11,7 +11,7 @@ from app.config import settings
 from app.database import get_db
 from app.models.calendar_account import CalendarAccount
 from app.models.user import User
-from app.services import google_calendar, apple_calendar
+from app.services import google_calendar, apple_calendar, outlook_calendar
 from app.services.crypto import encrypt
 from app.templates_config import templates
 
@@ -161,3 +161,49 @@ def apple_connect(
     apple_calendar.sync_events(account, db)
 
     return RedirectResponse(url="/dashboard?connected=apple", status_code=302)
+
+
+# ── Outlook (Microsoft Graph) ─────────────────────────────────────────────────
+
+@router.get("/outlook/start")
+def outlook_start(current_user: User = Depends(get_current_user)):
+    state = _make_state(current_user.id, "outlook")
+    auth_url = outlook_calendar.get_auth_url(state)
+    return RedirectResponse(url=auth_url)
+
+
+@router.get("/outlook/callback")
+def outlook_callback(
+    code: str = "",
+    state: str = "",
+    error: str = "",
+    db: Session = Depends(get_db),
+):
+    if error:
+        return RedirectResponse(url="/calendars/connect?error=outlook_denied")
+
+    user_id, _ = _verify_state(state)
+    token_data = outlook_calendar.exchange_code(code)
+
+    account = (
+        db.query(CalendarAccount)
+        .filter_by(user_id=user_id, provider="outlook", account_email=token_data["account_email"])
+        .first()
+    )
+    if not account:
+        account = CalendarAccount(
+            user_id=user_id,
+            provider="outlook",
+            account_email=token_data["account_email"],
+        )
+        db.add(account)
+
+    account.access_token = encrypt(token_data["access_token"])
+    if token_data.get("refresh_token"):
+        account.refresh_token = encrypt(token_data["refresh_token"])
+    account.token_expiry = token_data["token_expiry"]
+    db.commit()
+    db.refresh(account)
+
+    outlook_calendar.sync_events(account, db)
+    return RedirectResponse(url="/dashboard?connected=outlook")

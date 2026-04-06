@@ -16,6 +16,9 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str = "sqlite:///./calendar_sync.db"
 
+    RESEND_API_KEY: str = ""
+    RESEND_FROM_DOMAIN: str = "calendarsync.app"
+
     class Config:
         env_file = ".env"
 

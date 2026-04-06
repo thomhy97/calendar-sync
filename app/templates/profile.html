@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Mon profil — Calendar Sync{% endblock %}
+
+{% block content %}
+<div class="profile-page">
+  <a href="/dashboard" class="back-link">← Dashboard</a>
+  <h1>Mon profil</h1>
+
+  <div class="profile-section card">
+    <h2 class="section-label">Compte</h2>
+    <div class="profile-info-row">
+      <span class="profile-info-label">Email</span>
+      <span class="profile-info-value">{{ user.email }}</span>
+    </div>
+  </div>
+
+  <!-- Changer mot de passe -->
+  <div class="profile-section card">
+    <h2 class="section-label">Changer le mot de passe</h2>
+    {% if password_error %}
+      <div class="alert alert-error">{{ password_error }}</div>
+    {% endif %}
+    {% if password_success %}
+      <div class="alert alert-success">{{ password_success }}</div>
+    {% endif %}
+    <form method="POST" action="/profile/change-password" class="profile-form">
+      <div class="field">
+        <label>Mot de passe actuel</label>
+        <input type="password" name="current_password" required />
+      </div>
+      <div class="field">
+        <label>Nouveau mot de passe</label>
+        <input type="password" name="new_password" required minlength="8" />
+      </div>
+      <div class="field">
+        <label>Confirmer le nouveau mot de passe</label>
+        <input type="password" name="new_password_confirm" required minlength="8" />
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:auto">Mettre à jour</button>
+    </form>
+  </div>
+
+  <!-- Supprimer le compte -->
+  <div class="profile-section card danger-zone">
+    <h2 class="section-label danger-label">Zone dangereuse</h2>
+    <p class="danger-desc">La suppression de votre compte est irréversible. Tous vos calendriers, créneaux et liens de partage seront supprimés.</p>
+    <button class="btn-delete btn-delete-account" onclick="document.getElementById('delete-modal').style.display='flex'">Supprimer mon compte</button>
+  </div>
+</div>
+
+<!-- Modal suppression -->
+<div id="delete-modal" class="modal-overlay" style="display:none">
+  <div class="modal">
+    <h3>Supprimer le compte</h3>
+    <p>Cette action est irréversible. Confirmez votre mot de passe pour continuer.</p>
+    <form method="POST" action="/profile/delete">
+      <div class="field" style="margin-top:1rem">
+        <label>Mot de passe</label>
+        <input type="password" name="current_password" required />
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" onclick="document.getElementById('delete-modal').style.display='none'">Annuler</button>
+        <button type="submit" class="btn-delete">Confirmer la suppression</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

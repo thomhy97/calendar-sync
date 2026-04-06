@@ -100,11 +100,14 @@
                 {% endif %}
                 <li class="slot-item">
                   <div class="slot-time">{{ slot.start | time_fr }} – {{ slot.end | time_fr }}</div>
-                  <a class="btn-export"
-                     href="/slots/export.ics?start={{ slot.start.isoformat() }}&end={{ slot.end.isoformat() }}&title=Réunion"
-                     title="Télécharger l'invitation .ics">
-                    📅 Exporter
-                  </a>
+                  <div class="slot-actions">
+                    <a class="btn-export"
+                       href="/slots/export.ics?start={{ slot.start.isoformat() }}&end={{ slot.end.isoformat() }}&title=Réunion"
+                       title="Télécharger le .ics">📅</a>
+                    <button class="btn-email"
+                            onclick="showEmailModal('{{ slot.start.isoformat() }}','{{ slot.end.isoformat() }}')"
+                            title="Envoyer par email">✉️</button>
+                  </div>
                 </li>
               {% endfor %}
             </ul>
@@ -124,6 +127,27 @@
       {% endif %}
     </div>
 
+  </div>
+</div>
+
+<!-- Modale invitation email -->
+<div id="email-modal" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <h3>Envoyer l'invitation</h3>
+    <p class="modal-sub">Le fichier .ics sera joint automatiquement.</p>
+    <div class="field">
+      <label>Destinataires (séparés par une virgule)</label>
+      <input type="email" id="modal-recipients" placeholder="alice@exemple.com, bob@exemple.com" multiple />
+    </div>
+    <div class="field">
+      <label>Titre de la réunion</label>
+      <input type="text" id="modal-title" value="Réunion" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeEmailModal()">Annuler</button>
+      <button class="btn btn-primary" style="width:auto" onclick="submitInvite()">Envoyer</button>
+    </div>
+    <div id="modal-feedback" style="display:none; margin-top:0.75rem; font-size:0.85rem;"></div>
   </div>
 </div>
 
@@ -204,6 +228,52 @@ function renderTimeline() {
 }
 
 renderTimeline();
+</script>
+
+<script>
+let _inviteStart = '', _inviteEnd = '';
+
+function showEmailModal(start, end) {
+  _inviteStart = start; _inviteEnd = end;
+  document.getElementById('email-modal').style.display = 'flex';
+  document.getElementById('modal-feedback').style.display = 'none';
+  document.getElementById('modal-recipients').focus();
+}
+
+function closeEmailModal() {
+  document.getElementById('email-modal').style.display = 'none';
+}
+
+async function submitInvite() {
+  const recipients = document.getElementById('modal-recipients').value;
+  const title = document.getElementById('modal-title').value;
+  const fb = document.getElementById('modal-feedback');
+
+  const body = new FormData();
+  body.append('start', _inviteStart);
+  body.append('end', _inviteEnd);
+  body.append('title', title);
+  body.append('recipients', recipients);
+
+  fb.style.display = 'block';
+  fb.style.color = 'var(--text-3)';
+  fb.textContent = 'Envoi en cours...';
+
+  const res = await fetch('/slots/send-invite', { method: 'POST', body });
+  const data = await res.json();
+  if (data.ok) {
+    fb.style.color = 'var(--primary)';
+    fb.textContent = '✓ Invitation envoyée avec succès !';
+    setTimeout(closeEmailModal, 1800);
+  } else {
+    fb.style.color = 'var(--danger)';
+    fb.textContent = data.error || 'Erreur lors de l\'envoi.';
+  }
+}
+
+document.getElementById('email-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeEmailModal();
+});
 </script>
 {% endif %}
 {% endblock %}

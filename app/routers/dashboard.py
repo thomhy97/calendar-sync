@@ -10,6 +10,7 @@ from app.models.event import Event
 from app.models.user import User
 from app.services.google_calendar import sync_events as google_sync
 from app.services.apple_calendar import sync_events as apple_sync
+from app.services.outlook_calendar import sync_events as outlook_sync
 from app.templates_config import templates
 from sqlalchemy.orm import Session
 
@@ -73,6 +74,8 @@ def manual_sync(
             count = google_sync(account, db)
         elif account.provider == "apple":
             count = apple_sync(account, db)
+        elif account.provider == "outlook":
+            count = outlook_sync(account, db)
         else:
             return JSONResponse({"error": "Provider non supporté"}, status_code=400)
         return JSONResponse({"synced": count, "ok": True})

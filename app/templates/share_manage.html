@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Mes liens de partage — Calendar Sync{% endblock %}
+
+{% block content %}
+<div class="share-manage">
+  <a href="/dashboard" class="back-link">← Dashboard</a>
+  <h1>Liens de partage</h1>
+  <p class="subtitle">Partagez un lien public pour que n'importe qui puisse voir vos disponibilités sans compte.</p>
+
+  <!-- Créer un lien -->
+  <div class="card create-card">
+    <h2>Créer un nouveau lien</h2>
+    <form id="create-form">
+      <div class="field-row">
+        <div class="field">
+          <label>Durée du créneau</label>
+          <select name="duration_minutes">
+            <option value="30">30 min</option>
+            <option value="60">1 heure</option>
+            <option value="90">1h30</option>
+            <option value="120">2 heures</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Horizon (jours)</label>
+          <select name="days_ahead">
+            <option value="7">7 jours</option>
+            <option value="14" selected>14 jours</option>
+            <option value="30">30 jours</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Début journée</label>
+          <input type="time" name="work_start" value="09:00" />
+        </div>
+        <div class="field">
+          <label>Fin journée</label>
+          <input type="time" name="work_end" value="18:00" />
+        </div>
+      </div>
+      <div class="field">
+        <label>Label (optionnel)</label>
+        <input type="text" name="label" value="Mes disponibilités" placeholder="Ex: Consultation 30 min" />
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:auto; margin-top:0.5rem">Générer le lien</button>
+    </form>
+    <div id="new-link-result" style="display:none" class="link-result">
+      <span class="link-label">Votre lien :</span>
+      <code id="new-link-url"></code>
+      <button onclick="copyLink()" class="btn-copy">Copier</button>
+    </div>
+  </div>
+
+  <!-- Liens existants -->
+  {% if links %}
+  <div class="links-list">
+    <h2 class="section-title">Liens actifs</h2>
+    {% for link in links %}
+    <div class="link-item" id="link-{{ link.token }}">
+      <div class="link-info">
+        <div class="link-item-label">{{ link.label }}</div>
+        <div class="link-item-meta">{{ link.duration_minutes }} min · {{ link.days_ahead }} jours · {{ link.work_start }}–{{ link.work_end }}</div>
+      </div>
+      <div class="link-item-actions">
+        <code class="link-url-short">{{ request.base_url }}share/{{ link.token }}</code>
+        <button onclick="navigator.clipboard.writeText('{{ request.base_url }}share/{{ link.token }}')" class="btn-copy">Copier</button>
+        <button onclick="deleteLink('{{ link.token }}')" class="btn-delete">Supprimer</button>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+
+<script>
+document.getElementById('create-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const body = new FormData(e.target);
+  const res = await fetch('/share/create', { method: 'POST', body });
+  const data = await res.json();
+  if (data.ok) {
+    const url = `${location.origin}/share/${data.token}`;
+    document.getElementById('new-link-url').textContent = url;
+    document.getElementById('new-link-result').style.display = 'flex';
+  }
+});
+
+function copyLink() {
+  navigator.clipboard.writeText(document.getElementById('new-link-url').textContent);
+}
+
+async function deleteLink(token) {
+  if (!confirm('Supprimer ce lien ?')) return;
+  await fetch(`/share/delete/${token}`, { method: 'POST' });
+  document.getElementById(`link-${token}`)?.remove();
+}
+</script>
+{% endblock %}

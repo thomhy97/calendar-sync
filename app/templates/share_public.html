@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ link.label }} — Calendar Sync</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+  <main>
+    <div class="public-page">
+      <div class="public-header">
+        <div class="public-brand">Calendar Sync</div>
+        <h1>{{ link.label }}</h1>
+        <p class="subtitle">Disponibilités de <strong>{{ owner_email }}</strong> — créneaux de {{ link.duration_minutes }} min</p>
+      </div>
+
+      {% if slots %}
+        <div class="results-header">
+          <span class="results-count"><span>{{ slots_count }}</span> créneau{% if slots_count > 1 %}x{% endif %} disponible{% if slots_count > 1 %}s{% endif %}</span>
+          <div class="view-toggle">
+            <button class="toggle-btn active" id="btn-timeline" onclick="showView('timeline')">Timeline</button>
+            <button class="toggle-btn" id="btn-list" onclick="showView('list')">Liste</button>
+          </div>
+        </div>
+
+        <div id="view-timeline" class="timeline-container">
+          <div class="timeline-axis">
+            {% for mark in axis_labels %}
+            <span class="axis-mark" style="left: {{ mark.pct }}%">{{ mark.label }}</span>
+            {% endfor %}
+          </div>
+          <div class="timeline-rows" id="timeline-rows"></div>
+        </div>
+
+        <div id="view-list" style="display:none">
+          <ul class="slots-list">
+            {% set current_day = namespace(value="") %}
+            {% for slot in slots %}
+              {% set day_label = slot.start | date_fr %}
+              {% if day_label != current_day.value %}
+                {% set current_day.value = day_label %}
+                <li class="slot-day-header">{{ day_label }}</li>
+              {% endif %}
+              <li class="slot-item">
+                <div class="slot-time">{{ slot.start | time_fr }} – {{ slot.end | time_fr }}</div>
+                <a class="btn-export" href="/slots/export.ics?start={{ slot.start.isoformat() }}&end={{ slot.end.isoformat() }}" target="_blank">📅 .ics</a>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+
+      {% else %}
+        <div class="empty-results">
+          <p>Aucun créneau disponible sur cette période.</p>
+        </div>
+      {% endif %}
+
+      <p class="public-footer">Propulsé par <a href="/">Calendar Sync</a></p>
+    </div>
+  </main>
+
+  <script>
+  const TIMELINE_DATA = {{ timeline_json | safe }};
+
+  function showView(view) {
+    document.getElementById('view-timeline').style.display = view === 'timeline' ? 'block' : 'none';
+    document.getElementById('view-list').style.display = view === 'list' ? 'block' : 'none';
+    document.getElementById('btn-timeline').classList.toggle('active', view === 'timeline');
+    document.getElementById('btn-list').classList.toggle('active', view === 'list');
+  }
+
+  function renderTimeline() {
+    const container = document.getElementById('timeline-rows');
+    if (!container) return;
+    TIMELINE_DATA.forEach((day, i) => {
+      const row = document.createElement('div');
+      row.className = 'tl-row';
+      row.style.animationDelay = `${i * 40}ms`;
+      const label = document.createElement('div');
+      label.className = 'tl-label';
+      label.textContent = day.label;
+      row.appendChild(label);
+      const bar = document.createElement('div');
+      bar.className = 'tl-bar';
+      day.busy.forEach(b => {
+        const block = document.createElement('div');
+        block.className = 'tl-busy';
+        block.style.left = b.start_pct + '%';
+        block.style.width = b.width_pct + '%';
+        block.setAttribute('data-tip', b.label);
+        bar.appendChild(block);
+      });
+      day.slots.forEach(s => {
+        const block = document.createElement('div');
+        block.className = 'tl-slot';
+        block.style.left = s.start_pct + '%';
+        block.style.width = s.width_pct + '%';
+        block.setAttribute('data-tip', s.label + ' — cliquer pour exporter');
+        block.addEventListener('click', () => {
+          window.open(`/slots/export.ics?start=${encodeURIComponent(s.iso_start)}&end=${encodeURIComponent(s.iso_end)}`, '_blank');
+        });
+        bar.appendChild(block);
+      });
+      row.appendChild(bar);
+      const badge = document.createElement('div');
+      badge.className = 'tl-badge';
+      badge.textContent = day.slot_count;
+      row.appendChild(badge);
+      container.appendChild(row);
+    });
+    document.querySelectorAll('[data-tip]').forEach(el => {
+      const tip = document.createElement('div');
+      tip.className = 'tl-tooltip';
+      tip.textContent = el.getAttribute('data-tip');
+      el.appendChild(tip);
+    });
+  }
+  renderTimeline();
+  </script>
+</body>
+</html>

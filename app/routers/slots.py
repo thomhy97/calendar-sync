@@ -3,15 +3,17 @@ from datetime import datetime, time, timezone
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Form, Query, Request
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import get_current_user
 from app.database import get_db
 from app.models.user import User
 from app.services import slot_finder, ics_export
+from app.services.email import send_invite
 from app.services.google_calendar import sync_events as google_sync
 from app.services.apple_calendar import sync_events as apple_sync
+from app.services.outlook_calendar import sync_events as outlook_sync
 from app.models.calendar_account import CalendarAccount
 from app.templates_config import templates
 
@@ -175,6 +177,36 @@ def export_ics(
     )
 
 
+@router.post("/send-invite")
+def send_invite_email(
+    start: str = Form(...),
+    end: str = Form(...),
+    title: str = Form("Réunion"),
+    recipients: str = Form(...),  # emails séparés par virgule
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        dt_start = datetime.fromisoformat(start)
+        dt_end = datetime.fromisoformat(end)
+    except ValueError:
+        return JSONResponse({"ok": False, "error": "Dates invalides"}, status_code=400)
+
+    to_emails = [e.strip() for e in recipients.split(",") if e.strip()]
+    if not to_emails:
+        return JSONResponse({"ok": False, "error": "Aucun destinataire"}, status_code=400)
+
+    ok = send_invite(
+        to_emails=to_emails,
+        organizer_email=current_user.email,
+        start=dt_start,
+        end=dt_end,
+        title=title,
+    )
+    if ok:
+        return JSONResponse({"ok": True})
+    return JSONResponse({"ok": False, "error": "Envoi impossible. Vérifiez la configuration RESEND_API_KEY."}, status_code=500)
+
+
 def _sync_if_stale(user_ids: list[int], db: Session):
     """Resynchronise les calendriers qui n'ont pas été mis à jour depuis 15 min."""
     from datetime import timedelta
@@ -196,5 +228,7 @@ def _sync_if_stale(user_ids: list[int], db: Session):
                 google_sync(account, db)
             elif account.provider == "apple":
                 apple_sync(account, db)
+            elif account.provider == "outlook":
+                outlook_sync(account, db)
         except Exception:
             pass  # On continue même si la sync échoue

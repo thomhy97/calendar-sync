@@ -10,7 +10,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app.config import settings
 from app.database import Base, engine
-from app.routers import auth, dashboard, calendars, slots
+from app.routers import auth, dashboard, calendars, slots, share, profile
 
 Base.metadata.create_all(bind=engine)
 
@@ -23,6 +23,8 @@ app.include_router(auth.router)
 app.include_router(dashboard.router)
 app.include_router(calendars.router)
 app.include_router(slots.router)
+app.include_router(share.router)
+app.include_router(profile.router)
 
 
 @app.exception_handler(HTTPException)

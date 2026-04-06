@@ -1,3 +1,4 @@
+import secrets
 from datetime import datetime, timedelta, timezone
 
 from jose import JWTError, jwt
@@ -6,6 +7,7 @@ from app.config import settings
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 24
+REFRESH_TOKEN_EXPIRE_DAYS = 30
 
 
 def create_access_token(user_id: int) -> str:
@@ -23,3 +25,10 @@ def decode_access_token(token: str) -> int | None:
         return int(user_id)
     except JWTError:
         return None
+
+
+def create_refresh_token() -> tuple[str, datetime]:
+    """Retourne (token_str, expires_at)."""
+    token = secrets.token_urlsafe(48)
+    expires_at = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    return token, expires_at
